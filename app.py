@@ -1,13 +1,13 @@
 import requests
-import json
 from bs4 import BeautifulSoup
-import re
+from flask import Flask, render_template, request, jsonify
+
+app = Flask(__name__)
 
 def analyze_tech_stack(url: str) -> dict:
-    """Analyze a website to guess its core tech stack."""
     if not url.startswith("http"):
         url = "https://" + url
-        
+    
     stack = {"framework": "Unknown", "styling": "Unknown", "analytics": []}
     
     try:
@@ -39,8 +39,15 @@ def analyze_tech_stack(url: str) -> dict:
     except Exception as e:
         return {"error": str(e)}
 
+@app.route("/", methods=["GET", "POST"])
+def index():
+    result = None
+    target_url = ""
+    if request.method == "POST":
+        target_url = request.form.get("url", "")
+        if target_url:
+            result = analyze_tech_stack(target_url)
+    return render_template("index.html", result=result, target_url=target_url)
+
 if __name__ == '__main__':
-    target = "vercel.com"
-    print(f"🔍 Analyzing {target}...")
-    result = analyze_tech_stack(target)
-    print(json.dumps(result, indent=2))
+    app.run(debug=True, port=5001)
